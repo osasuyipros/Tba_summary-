@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>School Summary</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{
+      font-family:"Segoe UI",sans-serif;
+      color:#fff;min-height:100vh;
+      display:flex;flex-direction:column;align-items:center;
+    }
+    #loginPage{
+      background:url('https://files.catbox.moe/fph1r2.png') no-repeat center center/cover;
+      width:100%;height:100vh;
+      display:flex;justify-content:center;align-items:center;
+    }
+    .login-box{
+      background:rgba(0,0,0,0.7);
+      padding:25px;border-radius:12px;text-align:center;width:300px;
+    }
+    .status-bar{
+      width:100%;
+      background:rgba(0,0,0,0.4);
+      padding:8px 15px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      font-size:clamp(0.8rem,2.5vw,1rem);
+    }
+    .battery{background:#4caf50;color:white;padding:3px 8px;border-radius:8px;font-weight:500}
+    .alive{color:#4caf50;font-weight:600;text-transform:uppercase;padding:3px 8px;border-radius:8px;border:1px solid #4caf50}
+    input,textarea{width:100%;padding:10px;margin:10px 0;border-radius:8px;border:none}
+    button{padding:10px 20px;border:none;border-radius:8px;background:#0d6efd;color:#fff;font-weight:bold;cursor:pointer}
+    button:hover{background:#0b5ed7}
+    .error{color:red;margin-top:10px;font-weight:bold}
+    .success{color:#4caf50;margin-top:10px;font-weight:bold}
+    h1{margin:20px 0;text-align:center;color:#FFD700;font-weight:900}
+    h2{margin:15px 0;color:#FFD700}
+    .summary{background:rgba(0,0,0,0.55);padding:15px;border-radius:12px;margin:10px 0}
+    .summary p{margin:6px 0;color:#f5f5f5}
+    .summary strong{color:#ffeb3b}
+    .summary img{max-width:100%;margin-top:10px;border-radius:8px}
+    .delete-btn{background:red;margin-top:8px}
+    .form-box{background:rgba(0,0,0,0.6);padding:20px;border-radius:12px;margin:20px auto;width:90%;max-width:600px;display:none}
+    .join-btn{
+      display:block;text-align:center;margin:20px auto;
+      background:#25D366;color:white;padding:12px 20px;
+      font-size:1rem;font-weight:bold;border-radius:8px;
+      text-decoration:none;width:max-content;
+    }
+    .join-btn:hover{background:#1ebe5d}
+    .developer-credit{text-align:center;margin:10px 0;font-size:0.9rem;color:#aaa;}
+    .developer-credit strong{color:#FFD700;}
+    footer{margin-top:auto;padding:15px;color:#ccc;text-align:center}
+    #mainPage{background:url('https://i.imgur.com/lS5zbQD.png') no-repeat center center/cover;min-height:100vh;width:100%;}
+  </style>
+</head>
+<body>
+
+  <!-- Login Page -->
+  <div id="loginPage">
+    <div class="login-box">
+      <h2>School Summary Login</h2>
+      <input type="password" id="password" placeholder="Enter Password">
+      <button onclick="login()">Login</button>
+      <p id="loginMessage"></p>
+    </div>
+  </div>
+
+  <!-- Main Page -->
+  <div id="mainPage" style="display:none;width:100%;max-width:900px;">
+    <div class="status-bar">
+      <div class="battery" id="battery">🔋 100%</div>
+      <div class="alive">Alive</div>
+    </div>
+
+    <h1>📘 SCHOOL DAILY SUMMARY</h1>
+
+    <!-- Admin form -->
+    <div class="form-box" id="postForm">
+      <h2>Post a New Summary</h2>
+      <input id="date" placeholder="Date (auto-filled)" readonly>
+      <input id="subject" placeholder="Subject (e.g. Math)">
+      <input id="page" placeholder="Page (e.g. 22)">
+      <input id="exercise" placeholder="Exercise (e.g. Exercise 5)">
+      <textarea id="text" rows="3" placeholder="Summary text..."></textarea>
+      <input id="imageLink" placeholder="Image link (optional)">
+      <button id="postBtn">Post Summary</button>
+      <p id="postMessage"></p>
+    </div>
+
+    <div id="summaries-container">Loading summaries...</div>
+
+    <a id="joinGroup" class="join-btn" href="https://chat.whatsapp.com/L4cFTnriD9H1TsogHSpayy" target="_blank" style="display:none;">💬 Join Our Official Group</a>
+
+    <div class="developer-credit">
+      For the developer: <strong>Pros Tech</strong>
+    </div>
+
+    <footer>Made with ❤️ for our class</footer>
+  </div>
+
+  <!-- Firebase Script -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js";
+    import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBVB4lJbsI4KLmmtNv_zZHih52KLwsdmgs",
+      authDomain: "schoolsummary-7d349.firebaseapp.com",
+      projectId: "schoolsummary-7d349",
+      storageBucket: "schoolsummary-7d349.appspot.com",
+      messagingSenderId: "539872820684",
+      appId: "1:539872820684:web:191eab7b7b75aa208fb169",
+      measurementId: "G-VCZMWM1PN7"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    let userRole = null;
+
+    function getTodayDate(){
+      const months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sept","Oct","Nov","Dec"];
+      const t=new Date();
+      return `${t.getDate()} ${months[t.getMonth()]} ${t.getFullYear()}`;
+    }
+
+    window.login = function(){
+      const password=document.getElementById("password").value;
+      const message=document.getElementById("loginMessage");
+
+      if(password==="Tba"){
+        userRole="student";
+        document.getElementById("loginPage").style.display="none";
+        document.getElementById("mainPage").style.display="block";
+        document.getElementById("joinGroup").style.display="block";
+        loadSummaries();initBattery();
+      } else if(password==="Admin123"){
+        userRole="admin";
+        document.getElementById("loginPage").style.display="none";
+        document.getElementById("mainPage").style.display="block";
+        document.getElementById("postForm").style.display="block";
+        document.getElementById("date").value=getTodayDate();
+        loadSummaries();initBattery();
+
+        document.getElementById("postBtn").onclick = async () => {
+          const date=document.getElementById("date").value.trim()||getTodayDate();
+          const subject=document.getElementById("subject").value.trim();
+          const page=document.getElementById("page").value.trim();
+          const exercise=document.getElementById("exercise").value.trim();
+          const text=document.getElementById("text").value.trim();
+          const imageUrl=document.getElementById("imageLink").value.trim();
+          const msg=document.getElementById("postMessage");
+
+          msg.textContent="⏳ Posting summary...";
+          msg.className="";
+
+          try{
+            const docRef=await addDoc(collection(db,"summaries"),{date,subject,page,exercise,text,imageUrl,timestamp:new Date()});
+            msg.textContent="✅ Summary posted!";
+            msg.className="success";
+            console.log("✅ Summary added with ID:",docRef.id);
+            document.getElementById("subject").value="";
+            document.getElementById("page").value="";
+            document.getElementById("exercise").value="";
+            document.getElementById("text").value="";
+            document.getElementById("imageLink").value="";
+            document.getElementById("date").value=getTodayDate();
+            loadSummaries();
+          }catch(error){
+            console.error("❌ Error adding document:",error);
+            msg.textContent="❌ Failed: "+error.message;
+            msg.className="error";
+          }
+        };
+      } else {
+        message.textContent="Invalid password!";
+        message.className="error";
+      }
+    }
+
+    async function loadSummaries(){
+      const container=document.getElementById("summaries-container");
+      container.innerHTML="";
+      try{
+        const snap=await getDocs(collection(db,"summaries"));
+        if(snap.empty){container.innerHTML="<p>No summaries yet.</p>";return;}
+        snap.forEach((docSnap)=>{
+          const d=docSnap.data();const id=docSnap.id;
+          let html=`
+          <div class="summary">
+            <p><strong>📅 Date:</strong> ${d.date||""}</p>
+            <p><strong>📘 Subject:</strong> ${d.subject||""}</p>
+            <p><strong>📖 Page:</strong> ${d.page||""}</p>
+            <p><strong>📝 Summary:</strong> ${d.text||""}</p>
+            <p><strong>📂 Exercise:</strong> ${d.exercise||""}</p>
+            ${d.imageUrl?`<img src="${d.imageUrl}">`:""}
+          `;
+          if(userRole==="admin")html+=`<button class="delete-btn" onclick="deleteSummary('${id}')">🗑️ Delete</button>`;
+          html+=`</div>`;
+          container.innerHTML+=html;
+        });
+      }catch(e){
+        console.error("❌ Error loading summaries:",e);
+        container.innerHTML="<p class='error'>Failed to load summaries.</p>";
+      }
+    }
+
+    window.deleteSummary = async function(id){
+      if(confirm("Are you sure you want to delete this summary?")){
+        await deleteDoc(doc(db,"summaries",id));
+        loadSummaries();
+      }
+    }
+
+    function initBattery(){
+      if(navigator.getBattery){
+        navigator.getBattery().then(b=>{
+          function update(){
+            let p=Math.round(b.level*100);
+            document.getElementById("battery").textContent="🔋 "+p+"%";
+          }
+          update();
+          b.addEventListener("levelchange",update);
+        });
+      }
+    }
+  </script>
+</body>
+</html>
