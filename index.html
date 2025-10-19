@@ -54,7 +54,10 @@
     .developer-credit{text-align:center;margin:10px 0;font-size:0.9rem;color:#aaa;}
     .developer-credit strong{color:#FFD700;}
     footer{margin-top:auto;padding:15px;color:#ccc;text-align:center}
-    #mainPage{background:url('https://imgur.com/bk-XVM6a4h.png') no-repeat center center/cover;min-height:100vh;width:100%;}
+    #mainPage{
+      background:url('https://i.imgur.com/4mpDAmG.png') no-repeat center center/cover;
+      min-height:100vh;width:100%;
+    }
   </style>
 </head>
 <body>
@@ -108,13 +111,13 @@
     import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
 
     const firebaseConfig = {
-      apiKey: "AIzaSyBVB4lJbsI4KLmmtNv_zZHih52KLwsdmgs",
-      authDomain: "schoolsummary-7d349.firebaseapp.com",
-      projectId: "schoolsummary-7d349",
-      storageBucket: "schoolsummary-7d349.appspot.com",
-      messagingSenderId: "539872820684",
-      appId: "1:539872820684:web:191eab7b7b75aa208fb169",
-      measurementId: "G-VCZMWM1PN7"
+      apiKey: "AIzaSyBRXv7Oez8W8-Etkg2qReOPtRX-sL0fg8s",
+      authDomain: "summary-a6236.firebaseapp.com",
+      projectId: "summary-a6236",
+      storageBucket: "summary-a6236.firebasestorage.app",
+      messagingSenderId: "277224717011",
+      appId: "1:277224717011:web:c71705d733349869def226",
+      measurementId: "G-6H37K2KE2M"
     };
 
     const app = initializeApp(firebaseConfig);
@@ -195,7 +198,7 @@
             <p><strong>📘 Subject:</strong> ${d.subject||""}</p>
             <p><strong>📖 Page:</strong> ${d.page||""}</p>
             <p><strong>📝 Summary:</strong> ${d.text||""}</p>
-            <p><strong>📂 Exercise:</strong> ${d.exercise||""}</p>
+            ${d.exercise?`<p><strong>📂 Exercise:</strong> ${d.exercise}</p>`:""}
             ${d.imageUrl?`<img src="${d.imageUrl}">`:""}
           `;
           if(userRole==="admin")html+=`<button class="delete-btn" onclick="deleteSummary('${id}')">🗑️ Delete</button>`;
