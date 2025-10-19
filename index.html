@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>School Summary</title>
+  <title>📘 School Summary</title>
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
     body{
@@ -34,8 +34,6 @@
     input,textarea{width:100%;padding:10px;margin:10px 0;border-radius:8px;border:none}
     button{padding:10px 20px;border:none;border-radius:8px;background:#0d6efd;color:#fff;font-weight:bold;cursor:pointer}
     button:hover{background:#0b5ed7}
-    .error{color:red;margin-top:10px;font-weight:bold}
-    .success{color:#4caf50;margin-top:10px;font-weight:bold}
     h1{margin:20px 0;text-align:center;color:#FFD700;font-weight:900}
     h2{margin:15px 0;color:#FFD700}
     .summary{background:rgba(0,0,0,0.55);padding:15px;border-radius:12px;margin:10px 0}
@@ -54,21 +52,43 @@
     .developer-credit{text-align:center;margin:10px 0;font-size:0.9rem;color:#aaa;}
     .developer-credit strong{color:#FFD700;}
     footer{margin-top:auto;padding:15px;color:#ccc;text-align:center}
-    #mainPage{
-      background:url('https://i.imgur.com/4mpDAmG.png') no-repeat center center/cover;
-      min-height:100vh;width:100%;
+    #mainPage{background:url('https://i.imgur.com/4mpDAmG.png') no-repeat center center/cover;min-height:100vh;width:100%;}
+
+    /* Toast styling */
+    .toast {
+      position: fixed;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%) scale(0.95);
+      min-width: 260px;
+      max-width: 90%;
+      padding: 14px 18px;
+      border-radius: 10px;
+      color: #fff;
+      font-weight: 600;
+      text-align: center;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 260ms ease, transform 260ms ease;
+      z-index: 9999;
     }
+    .toast.show { opacity:1; transform:translate(-50%, -50%) scale(1); pointer-events:auto; }
+    .toast.info{ background:linear-gradient(90deg,#1e90ff,#007bff); }
+    .toast.success{ background:linear-gradient(90deg,#28a745,#1db954); }
+    .toast.error{ background:linear-gradient(90deg,#dc3545,#c82333); }
   </style>
 </head>
 <body>
 
+  <div id="toast" class="toast"></div>
+
   <!-- Login Page -->
   <div id="loginPage">
     <div class="login-box">
-      <h2>School Summary Login</h2>
+      <h2>🔐 School Summary Login</h2>
       <input type="password" id="password" placeholder="Enter Password">
       <button onclick="login()">Login</button>
-      <p id="loginMessage"></p>
     </div>
   </div>
 
@@ -79,19 +99,18 @@
       <div class="alive">Alive</div>
     </div>
 
-    <h1>📘 SCHOOL DAILY SUMMARY</h1>
+    <h1>🏫 SCHOOL DAILY SUMMARY ✨</h1>
 
     <!-- Admin form -->
     <div class="form-box" id="postForm">
-      <h2>Post a New Summary</h2>
+      <h2>📝 Post a New Summary</h2>
       <input id="date" placeholder="Date (auto-filled)" readonly>
-      <input id="subject" placeholder="Subject (e.g. Math)">
-      <input id="page" placeholder="Page (e.g. 22)">
-      <input id="exercise" placeholder="Exercise (e.g. Exercise 5)">
-      <textarea id="text" rows="3" placeholder="Summary text..."></textarea>
-      <input id="imageLink" placeholder="Image link (optional)">
-      <button id="postBtn">Post Summary</button>
-      <p id="postMessage"></p>
+      <input id="subject" placeholder="📘 Subject (e.g. Math)">
+      <input id="page" placeholder="📖 Page (e.g. 22)">
+      <input id="exercise" placeholder="📂 Exercise (e.g. Exercise 5)">
+      <textarea id="text" rows="3" placeholder="💬 Summary text..."></textarea>
+      <input id="imageLink" placeholder="🖼️ Image link (optional)">
+      <button id="postBtn">📤 Post Summary</button>
     </div>
 
     <div id="summaries-container">Loading summaries...</div>
@@ -123,6 +142,27 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     let userRole = null;
+    let toastTimer = null;
+
+    // 🔹 Toast notification
+    function showToast(type, message) {
+      const t = document.getElementById('toast');
+      t.className = 'toast ' + type + ' show';
+      t.textContent = message;
+
+      if (toastTimer) {
+        clearTimeout(toastTimer);
+        toastTimer = null;
+      }
+
+      toastTimer = setTimeout(() => {
+        t.className = 'toast ' + type;
+        setTimeout(() => { 
+          t.textContent = ''; 
+          t.className = 'toast'; 
+        }, 300);
+      }, 2000); // show for 2 seconds
+    }
 
     function getTodayDate(){
       const months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sept","Oct","Nov","Dec"];
@@ -132,55 +172,54 @@
 
     window.login = function(){
       const password=document.getElementById("password").value;
-      const message=document.getElementById("loginMessage");
 
       if(password==="Tba"){
         userRole="student";
-        document.getElementById("loginPage").style.display="none";
-        document.getElementById("mainPage").style.display="block";
-        document.getElementById("joinGroup").style.display="block";
-        loadSummaries();initBattery();
+        showToast('success','✅ Login successful!');
+        setTimeout(()=>{
+          document.getElementById("loginPage").style.display="none";
+          document.getElementById("mainPage").style.display="block";
+          document.getElementById("joinGroup").style.display="block";
+          loadSummaries();initBattery();
+        },800);
       } else if(password==="Admin123"){
         userRole="admin";
-        document.getElementById("loginPage").style.display="none";
-        document.getElementById("mainPage").style.display="block";
-        document.getElementById("postForm").style.display="block";
-        document.getElementById("date").value=getTodayDate();
-        loadSummaries();initBattery();
+        showToast('success','✅ Admin login successful!');
+        setTimeout(()=>{
+          document.getElementById("loginPage").style.display="none";
+          document.getElementById("mainPage").style.display="block";
+          document.getElementById("postForm").style.display="block";
+          document.getElementById("date").value=getTodayDate();
+          loadSummaries();initBattery();
 
-        document.getElementById("postBtn").onclick = async () => {
-          const date=document.getElementById("date").value.trim()||getTodayDate();
-          const subject=document.getElementById("subject").value.trim();
-          const page=document.getElementById("page").value.trim();
-          const exercise=document.getElementById("exercise").value.trim();
-          const text=document.getElementById("text").value.trim();
-          const imageUrl=document.getElementById("imageLink").value.trim();
-          const msg=document.getElementById("postMessage");
+          document.getElementById("postBtn").onclick = async () => {
+            const date=document.getElementById("date").value.trim()||getTodayDate();
+            const subject=document.getElementById("subject").value.trim();
+            const page=document.getElementById("page").value.trim();
+            const exercise=document.getElementById("exercise").value.trim();
+            const text=document.getElementById("text").value.trim();
+            const imageUrl=document.getElementById("imageLink").value.trim();
 
-          msg.textContent="⏳ Posting summary...";
-          msg.className="";
+            showToast('info','⏳ Posting summary...');
 
-          try{
-            const docRef=await addDoc(collection(db,"summaries"),{date,subject,page,exercise,text,imageUrl,timestamp:new Date()});
-            msg.textContent="✅ Summary posted!";
-            msg.className="success";
-            console.log("✅ Summary added with ID:",docRef.id);
-            document.getElementById("subject").value="";
-            document.getElementById("page").value="";
-            document.getElementById("exercise").value="";
-            document.getElementById("text").value="";
-            document.getElementById("imageLink").value="";
-            document.getElementById("date").value=getTodayDate();
-            loadSummaries();
-          }catch(error){
-            console.error("❌ Error adding document:",error);
-            msg.textContent="❌ Failed: "+error.message;
-            msg.className="error";
-          }
-        };
+            try{
+              await addDoc(collection(db,"summaries"),{date,subject,page,exercise,text,imageUrl,timestamp:new Date()});
+              showToast('success','✅ Summary posted successfully!');
+              document.getElementById("subject").value="";
+              document.getElementById("page").value="";
+              document.getElementById("exercise").value="";
+              document.getElementById("text").value="";
+              document.getElementById("imageLink").value="";
+              document.getElementById("date").value=getTodayDate();
+              loadSummaries();
+            }catch(error){
+              console.error("❌ Error adding document:",error);
+              showToast('error','❌ Failed to post summary');
+            }
+          };
+        },800);
       } else {
-        message.textContent="Invalid password!";
-        message.className="error";
+        showToast('error','❌ Invalid password!');
       }
     }
 
@@ -197,8 +236,8 @@
             <p><strong>📅 Date:</strong> ${d.date||""}</p>
             <p><strong>📘 Subject:</strong> ${d.subject||""}</p>
             <p><strong>📖 Page:</strong> ${d.page||""}</p>
+            <p><strong>📂 Exercise:</strong> ${d.exercise||""}</p>
             <p><strong>📝 Summary:</strong> ${d.text||""}</p>
-            ${d.exercise?`<p><strong>📂 Exercise:</strong> ${d.exercise}</p>`:""}
             ${d.imageUrl?`<img src="${d.imageUrl}">`:""}
           `;
           if(userRole==="admin")html+=`<button class="delete-btn" onclick="deleteSummary('${id}')">🗑️ Delete</button>`;
@@ -214,6 +253,7 @@
     window.deleteSummary = async function(id){
       if(confirm("Are you sure you want to delete this summary?")){
         await deleteDoc(doc(db,"summaries",id));
+        showToast('success','🗑️ Summary deleted');
         loadSummaries();
       }
     }
@@ -230,6 +270,12 @@
         });
       }
     }
+
+    // 🚪 Redirect to login if user tries to leave
+    window.addEventListener("beforeunload", (e) => {
+      e.preventDefault();
+      location.reload();
+    });
   </script>
 </body>
 </html>
